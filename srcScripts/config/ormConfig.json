@@ -1,0 +1,13 @@
+{
+  "type": "mssql",
+  "host": "localhost",
+  "port": 1433,
+  "username": "sa",
+  "password": "B12js6dy$^",
+  "database": "InventoryManagementDB",
+  "synchronize": true,
+  "logging": false,
+  "entities": [
+    "srcScripts/entities/**/*.js"
+  ]
+}
