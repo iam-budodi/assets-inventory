@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+   "lib": [
+      "es5", 
+      "es6", 
+      "dom"
+   ],
+    "target": "es5",
+    "module": "commonjs",
+    "removeComments": true,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "outDir": "./build",
+    "sourceMap": true,
+    "baseUrl": "./"
+ }
+}
