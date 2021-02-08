@@ -1,3 +1,5 @@
+const path = require('path');
+
 module.exports = {
   type: 'mssql',
   host: 'localhost',
@@ -12,6 +14,6 @@ module.exports = {
   synchronize: true,
   logging: false,
   entities: [
-    './srcScripts/entities/**/*.js',
+    path.join(__dirname, '/srcScripts/entities/**/*.js'),
   ],
 };

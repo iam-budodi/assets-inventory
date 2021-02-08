@@ -22,13 +22,15 @@ function assetController() {
       }
 
       const assets = await query.getMany();
+
       if (!assets) {
         res.status(500);
         res.send('Internal Server Error');
       }
+
       res.json(assets);
     } catch (error) {
-      debug(error.stack);
+      debug(error.message);
     }
   }
 

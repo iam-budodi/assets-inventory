@@ -15,8 +15,10 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const assetRouter = require('../srcScripts/routes/assetRoutes')();
+const authRouter = require('../srcScripts/routes/authRoutes')();
 
 app.use('/api/assets', assetRouter);
+app.use('/api/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.send({ message: 'hello world, guess the really learning is kicking off' });
