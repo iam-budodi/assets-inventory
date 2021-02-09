@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 function authUser() {
   async function passwordStrength(password) {
@@ -19,8 +20,13 @@ function authUser() {
     return bcrypt.compare(password, storedHashPassword);
   }
 
+  function getUsernameFromToken(token) {
+    const { sub } = jwt.decode(token);
+    return sub;
+  }
+
   return {
-    passwordStrength, generateSalt, hashPassword, validatePassword,
+    passwordStrength, generateSalt, hashPassword, validatePassword, getUsernameFromToken,
   };
 }
 

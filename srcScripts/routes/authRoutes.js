@@ -1,14 +1,18 @@
 const express = require('express');
 const authController = require('../controllers/authController');
+const { verifyToken } = require('../helper/authCookie')();
 
 const authRouter = express.Router();
 
 function authRoute() {
-  const { signUp, signIn, getUsers } = authController();
+  const {
+    signUp, signIn, signOut, getUsers,
+  } = authController();
 
-  authRouter.route('/signup').post(signUp);
-  authRouter.route('/signin').post(signIn);
-  authRouter.route('/users').get(getUsers);
+  authRouter.route('/login').post(signIn);
+  authRouter.route('/signup').post(verifyToken, signUp);
+  authRouter.route('/logout').get(verifyToken, signOut);
+  authRouter.route('/users').get(verifyToken, getUsers);
 
   return authRouter;
 }

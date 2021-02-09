@@ -1,19 +1,19 @@
 const path = require('path');
 
 module.exports = {
-  type: 'mssql',
-  host: 'localhost',
-  port: 1433,
-  username: 'sa',
-  password: 'B12js6dy$^',
-  database: 'InventoryManagementDB',
+  type: process.env.TYPEORM_CONNECTION,
+  host: process.env.TYPEORM_HOST,
+  port: +process.env.TYPEORM_PORT,
+  username: process.env.TYPEORM_USERNAME,
+  password: process.env.TYPEORM_PASSWORD,
+  database: process.env.TYPEORM_DATABASE,
   options: {
     encrypt: true,
     enableArithAbort: true,
   },
-  synchronize: true,
-  logging: false,
+  synchronize: process.env.TYPEORM_SYNCHRONIZE,
+  logging: process.env.TYPEORM_LOGGING,
   entities: [
-    path.join(__dirname, '/srcScripts/entities/**/*.js'),
+    path.join(__dirname, process.env.TYPEORM_ENTITIES),
   ],
 };

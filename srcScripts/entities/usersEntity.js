@@ -7,7 +7,7 @@ module.exports = new EntitySchema({
     employeeID: {
       primary: true,
       type: 'int',
-      generated: true,
+      generated: 'increment',
     },
     firstName: {
       type: 'nvarchar',
@@ -26,9 +26,19 @@ module.exports = new EntitySchema({
       type: 'nvarchar',
       nullable: false,
     },
+    role: {
+      type: 'nvarchar',
+      nullable: false,
+    },
     salt: {
       type: 'nvarchar',
       nullable: false,
+    },
+  },
+  relations: {
+    assets: {
+      type: 'one-to-many',
+      target: 'Asset',
     },
   },
 

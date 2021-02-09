@@ -1,5 +1,6 @@
 const express = require('express');
 const assetController = require('../controllers/assetController');
+const { verifyToken } = require('../helper/authCookie')();
 
 const assetRouter = express.Router();
 
@@ -10,11 +11,11 @@ function assetRoute() {
 
   assetRouter.use('/:id', middleware);
 
-  assetRouter.route('/').get(getAssets);
-  assetRouter.route('/:id').get(getAssetById);
-  assetRouter.route('/').post(createAsset);
-  assetRouter.route('/:id').put(updateAsset);
-  assetRouter.route('/:id').delete(deleteAsset);
+  assetRouter.route('/').get(verifyToken, getAssets);
+  assetRouter.route('/:id').get(verifyToken, getAssetById);
+  assetRouter.route('/').post(verifyToken, createAsset);
+  assetRouter.route('/:id').put(verifyToken, updateAsset);
+  assetRouter.route('/:id').delete(verifyToken, deleteAsset);
 
   return assetRouter;
 }

@@ -1,6 +1,9 @@
 const { getRepository } = require('typeorm');
+// const jwt = require('jsonwebtoken');
 const debug = require('debug')('srcServer: authController');
 const User = require('../entities/usersEntity');
+const { USERS, SIGNUP } = require('../config/constants');
+const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const {
   generateSalt, hashPassword, passwordStrength, validatePassword,
 } = require('../helper/authUser')();
@@ -8,24 +11,31 @@ const {
 function authController() {
   async function signUp(req, res) {
     const userRepository = await getRepository('User');
+    const accessToken = req.headers.authorization.split(' ')[1];
+
     const {
-      firstName, lastName, userName, password,
+      firstName, lastName, userName, password, role,
     } = req.body;
-
-    const user = userRepository.create(User);
-    // TODO: consider using uuid library to generate and store employeeID
-    if (await passwordStrength(password)) {
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.userName = userName;
-      user.salt = await generateSalt();
-      user.password = await hashPassword(password, user.salt);
-
+    if (getAudienceFromToken(accessToken).includes(SIGNUP)) {
       try {
-        await userRepository.save(user);
-        res.sendStatus(201);
-        // res.json(user);
-        if (res.status(201)) debug('user signed up successful');
+        const user = userRepository.create(User);
+        // TODO: consider using uuid library to generate and store employeeID
+        if (await passwordStrength(password)) {
+          user.firstName = firstName;
+          user.lastName = lastName;
+          user.userName = userName;
+          user.role = role;
+          user.salt = await generateSalt();
+          user.password = await hashPassword(password, user.salt);
+          await userRepository.save(user);
+          const token = await generateToken(accessToken, null);
+
+          res.status(201);
+          res.json({ message: 'New user added', token });
+          if (res.status(201)) debug('user signed up successful');
+        } else {
+          res.send({ message: 'Weak password' });
+        }
       } catch (error) {
         if (error.number === 2627) {
           res.status(409);
@@ -35,17 +45,52 @@ function authController() {
         }
       }
     } else {
-      res.send('Weak password');
+      res.status(403);
+      res.send({ message: 'Not authorized to create users', accessToken });
     }
+
+    // const user = userRepository.create(User);
+    // // TODO: consider using uuid library to generate and store employeeID
+    // if (await passwordStrength(password)) {
+    //   user.firstName = firstName;
+    //   user.lastName = lastName;
+    //   user.userName = userName;
+    //   user.role = role;
+    //   user.salt = await generateSalt();
+    //   user.password = await hashPassword(password, user.salt);
+
+    //   try {
+    //     await userRepository.save(user);
+    //     res.sendStatus(201);
+    //     // res.json(user);
+    //     if (res.status(201)) debug('user signed up successful');
+    //   } catch (error) {
+    //     if (error.number === 2627) {
+    //       res.status(409);
+    //       res.send('Username already exists.');
+    //     } else {
+    //       res.sendStatus(500);
+    //     }
+    //   }
+    // } else {
+    //   res.send('Weak password');
+    // }
   }
 
   async function signIn(req, res) {
-    const { userName, password } = req.body;
+    // const { userName, password } = req.body;
+
+    const base64Encoding = req.headers.authorization.split(' ')[1];
+    const credentials = Buffer.from(base64Encoding, 'base64').toString().split(':');
+    const userName = credentials[0];
+    const password = credentials[1];
     try {
       const user = await getRepository('User').findOne({ userName });
       // TODO: find out a way to handle empty object from login request
       if (user && (await validatePassword(password, user.password))) {
-        res.json(user.firstName);
+        const token = await generateToken(null, user.userName);
+        res.status(200);
+        res.json({ name: user.firstName, role: user.role, token });
       } else {
         res.status(401);
         res.json('Invalid credential');
@@ -55,30 +100,48 @@ function authController() {
     }
   }
 
-  async function getUsers(req, res) {
-    try {
-      const updatedUserList = [];
-      const userRepository = await getRepository('User');
-      const users = await userRepository.find();
-      users.forEach((user) => {
-        updatedUserList.push({
-          firstName: user.firstName,
-          lastName: user.lastName,
-          userName: user.userName,
-          employeeID: user.employeeID,
-        });
-      });
+  function signOut(req, res) {
+    // res.clearCookie('accessToken');
+    res.status(200);
+    res.json({ message: 'Signed out' });
+  }
 
-      if (!updatedUserList) {
-        res.sendStatus(500);
+  // NOTE: refer to the implementation here to limit access
+  async function getUsers(req, res) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    if (getAudienceFromToken(accessToken).includes(USERS)) {
+      try {
+        const updatedUserList = [];
+        const userRepository = await getRepository('User');
+        const users = await userRepository.find();
+        if (users) {
+          users.forEach((user) => {
+            updatedUserList.push({
+              firstName: user.firstName,
+              lastName: user.lastName,
+              userName: user.userName,
+              role: user.role,
+              employeeID: user.employeeID,
+            });
+          });
+          // assign cookie for user session
+          const token = await generateToken(accessToken, null);
+          res.json({ users: updatedUserList, token });
+        } else {
+          res.sendStatus(500);
+        }
+      } catch (error) {
+        debug(error.message);
       }
-      res.json(updatedUserList);
-    } catch (error) {
-      debug(error.message);
+    } else {
+      res.status(403);
+      res.send({ message: 'Not authorized to view users', accessToken });
     }
   }
 
-  return { signUp, signIn, getUsers };
+  return {
+    signUp, signIn, signOut, getUsers,
+  };
 }
 
 module.exports = authController;
