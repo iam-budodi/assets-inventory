@@ -39,7 +39,39 @@ module.exports = new EntitySchema({
     assets: {
       type: 'one-to-many',
       target: 'Asset',
+      cascade: true,
+      eager: true,
+      inverseSide: 'user',
     },
+
+    // assets: {
+    //   name: 'user',
+    //   target: 'User',
+    //   type: 'one-to-many',
+    //   eager: false,
+    //   joinTable: {
+    //     name: 'user_assets',
+    //     joinColumn: {
+    //       name: 'user_id',
+    //     },
+    //     inversJoinColumn: {
+    //       name: 'asset_id',
+    //     },
+    //   },
+    //   inverseSide: 'User',
+    //   cascade: true,
+    // },
   },
 
 });
+
+// relations: {
+//   user: {
+//     type: 'one-to-many',
+//     target: 'User',
+//     // eager: true,
+//     joinColumn: {
+//       name: 'userName',
+//     },
+//   },
+// },

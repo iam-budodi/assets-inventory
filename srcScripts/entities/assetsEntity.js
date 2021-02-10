@@ -40,11 +40,26 @@ module.exports = new EntitySchema({
       type: 'nvarchar',
       length: 60,
     },
+    employeeID: { // in case it fails to populate uncomment this
+      type: 'int',
+    },
   },
   relations: {
     user: {
-      type: 'one-to-many',
+      type: 'many-to-one',
       target: 'User',
+      eager: false,
+      // joinColumn: true,
+      joinColumn: {
+        name: 'employeeID', referencedColumnName: 'employeeID',
+      },
     },
+
+    // users: {
+    //   type: 'many-to-one',
+    //   target: 'User',
+    //   eager: true,
+    //   inverseSide: 'assets',
+    // },
   },
 });

@@ -1,54 +1,18 @@
 USERS
 =========
-1. only admin can signup USERS
-2. associate users with assets
-3. guard routes.
-4. 
+1. only admin can signup USERS (completed)
+2. associate users with assets (completed)
+3. guard routes. (completed)
+4. get assets only for loged in user and owner of item (TODO)
+5. Handle empty object from login (TODO)
+6. Refactor get users function (TODO)
+7. Create get single user with all its assets (TODO)
+8. modify update and delete functionality for only admin (TODO)
+9. only admin should see all the assets the rest should see only their assets (TODO)
+
+ASSETS 
+=========
+1. Properly refactor createAssets function to handle error 
+   (Cannot set headers after they are sent to the client) (completed)
 
 
-[
-    {
-        "assetNumber": 4,
-        "assetName": "desktop",
-        "assetModel": "Q123",
-        "assetManufactureDate": "2020-10-18",
-        "assetCommissionedDate": "2020-10-18",
-        "assetPrice": 125000,
-        "assetStatus": "OPERATIONAL",
-        "assetLocation": "Tower",
-        "assetCustodian": "Japhet"
-    },
-    {
-        "assetNumber": 5,
-        "assetName": "laptop",
-        "assetModel": "THINKPAD9123",
-        "assetManufactureDate": "2020-10-18",
-        "assetCommissionedDate": "2020-10-18",
-        "assetPrice": 1125000,
-        "assetStatus": "OPERATIONAL",
-        "assetLocation": "Tower",
-        "assetCustodian": "Joseph"
-    },
-    {
-        "assetNumber": 7,
-        "assetName": "Barcode Reader",
-        "assetModel": "BR45Z",
-        "assetManufactureDate": "2020-10-18",
-        "assetCommissionedDate": "2020-10-18",
-        "assetPrice": 3000000,
-        "assetStatus": "DEFECTED",
-        "assetLocation": "Kariakoo Branch",
-        "assetCustodian": "Manasec"
-    },
-    {
-        "assetNumber": 1007,
-        "assetName": "HP Pavillion",
-        "assetModel": "BR45Z",
-        "assetManufactureDate": "2020-10-18",
-        "assetCommissionedDate": "2020-10-18",
-        "assetPrice": 3000000,
-        "assetStatus": "DEFECTED",
-        "assetLocation": "Kariakoo Branch",
-        "assetCustodian": "Sende"
-    }
-]

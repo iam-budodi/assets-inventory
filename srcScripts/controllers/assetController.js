@@ -1,6 +1,9 @@
 const { getConnection, getRepository } = require('typeorm');
 const debug = require('debug')('srcServer: assetController');
 const Asset = require('../entities/assetsEntity');
+const { ASSET } = require('../config/constants');
+const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
+const { getUsernameFromToken } = require('../helper/authUser')();
 
 function assetController() {
   async function getAssets(req, res) {
@@ -40,12 +43,10 @@ function assetController() {
   }
 
   async function createAsset(req, res) {
-    if (!req.body.assetNumber) {
-      res.status(400);
-      res.send('Bad Request');
-    }
-
-    try {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    const userName = getUsernameFromToken(accessToken);
+    debug(req.body.assetName);
+    if (req.body.assetName && getAudienceFromToken(accessToken).includes(ASSET)) {
       const {
         assetNumber,
         assetName,
@@ -58,34 +59,44 @@ function assetController() {
         assetCustodian,
       } = req.body;
 
-      const assetRepository = await getRepository('Asset');
-      const postQuery = await assetRepository.createQueryBuilder('assets');
-      const asset = {
-        assetNumber,
-        assetName,
-        assetModel,
-        assetManufactureDate,
-        assetCommissionedDate,
-        assetPrice,
-        assetStatus,
-        assetLocation,
-        assetCustodian,
-      };
-      const result = await postQuery
-        .insert()
-        .into(Asset)
-        .values([asset])
-        .execute();
+      try {
+        const postQuery = await getRepository('Asset').createQueryBuilder('assets');
+        const { employeeID } = await getRepository('User').findOne({ userName, relations: ['assets'] });
+        const token = await generateToken(accessToken, null);
 
-      if (!result) {
-        res.sendStatus(400);
+        const asset = {
+          assetNumber,
+          assetName,
+          assetModel,
+          assetManufactureDate,
+          assetCommissionedDate,
+          assetPrice,
+          assetStatus,
+          assetLocation,
+          assetCustodian,
+        };
+
+        asset.employeeID = employeeID;
+        debug(asset);
+
+        await postQuery
+          .insert()
+          .into(Asset)
+          .values([asset])
+          .execute();
+
+        res.status(201);
+        res.send({ message: `${asset.assetName} was successful added`, token });
+      } catch (error) {
+        debug(error.message);
+        res.sendStatus(500);
       }
-
-      res.sendStatus(201);
-      // res.json(result);
-    } catch (error) {
-      res.status(500);
-      res.send('Internal Server Error');
+    } else if (!req.body.assetName) {
+      res.status(400);
+      res.send({ message: 'Asset can\'t be an empty object', accessToken });
+    } else {
+      res.status(403);
+      res.send({ message: 'Not authorized to create users', accessToken });
     }
   }
 
@@ -148,14 +159,3 @@ function assetController() {
 }
 
 module.exports = assetController;
-
-// createConnection().then(async (connection) => {
-//   const assetRepository = await connection.getRepository('Asset');
-//   debug(assetRepository);
-
-//   router.route('/assets')
-//     .get(async (req, res) => {
-//       const assets = await assetRepository.find();
-//       res.json(assets);
-//     });
-// });
