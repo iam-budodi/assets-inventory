@@ -5,7 +5,7 @@ const User = require('../entities/usersEntity');
 const { USERS, SIGNUP } = require('../config/constants');
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const {
-  generateSalt, hashPassword, passwordStrength, validatePassword,
+  generateSalt, hashPassword, passwordStrength, validatePassword, isEmptyRequestBody,
 } = require('../helper/authUser')();
 
 function authController() {
@@ -13,11 +13,11 @@ function authController() {
     const userRepository = await getRepository('User');
     const accessToken = req.headers.authorization.split(' ')[1];
 
-    const {
-      firstName, lastName, userName, password, role,
-    } = req.body;
+    if (isEmptyRequestBody(req.body) >= 5 && getAudienceFromToken(accessToken).includes(SIGNUP)) {
+      const {
+        firstName, lastName, userName, password, role,
+      } = req.body;
 
-    if (getAudienceFromToken(accessToken).includes(SIGNUP)) {
       try {
         const user = userRepository.create(User);
         // TODO: consider using uuid library to generate and store employeeID
@@ -45,6 +45,18 @@ function authController() {
           res.sendStatus(500);
         }
       }
+    } else if (isEmptyRequestBody(req.body) === 0) {
+      res.status(400);
+      res.send({
+        message: 'User can\'t be an empty object, please try again',
+        accessToken,
+      });
+    } else if (isEmptyRequestBody(req.body) < 5) {
+      res.status(400);
+      res.send({
+        message: 'User object is missing some information, please check and try again',
+        accessToken,
+      });
     } else {
       res.status(403);
       res.send({ message: 'Not authorized to create users', accessToken });
@@ -85,7 +97,7 @@ function authController() {
       try {
         const updatedUserList = [];
         const userRepository = await getRepository('User');
-        const users = await userRepository.findOne({ relations: ['assets'] });
+        const users = await userRepository.find({ relations: ['assets'] });
         debug(users);
         if (users) {
           users.forEach((user) => {
@@ -95,16 +107,22 @@ function authController() {
               userName: user.userName,
               role: user.role,
               employeeID: user.employeeID,
+              assets: user.assets,
             });
           });
           // assign cookie for user session
           const token = await generateToken(accessToken, null);
+          res.status(200);
           res.json({ users: updatedUserList, token });
         } else {
-          res.sendStatus(500);
+          res.status(500);
+          res.json({ message: 'Internal Server Error', accessToken });
         }
       } catch (error) {
-        debug(error.message);
+        debug({
+          errorMessage: error.message,
+          errorDescription: 'Error retrieving users from database',
+        });
       }
     } else {
       res.status(403);

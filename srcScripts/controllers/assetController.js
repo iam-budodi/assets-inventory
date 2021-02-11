@@ -3,7 +3,7 @@ const debug = require('debug')('srcServer: assetController');
 const Asset = require('../entities/assetsEntity');
 const { ASSET } = require('../config/constants');
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
-const { getUsernameFromToken } = require('../helper/authUser')();
+const { getUsernameFromToken, isEmptyRequestBody } = require('../helper/authUser')();
 
 function assetController() {
   async function getAssets(req, res) {
@@ -45,8 +45,8 @@ function assetController() {
   async function createAsset(req, res) {
     const accessToken = req.headers.authorization.split(' ')[1];
     const userName = getUsernameFromToken(accessToken);
-    debug(req.body.assetName);
-    if (req.body.assetName && getAudienceFromToken(accessToken).includes(ASSET)) {
+    debug(Object.keys(req.body).length);
+    if (isEmptyRequestBody(req.body) >= 8 && getAudienceFromToken(accessToken).includes(ASSET)) {
       const {
         assetNumber,
         assetName,
@@ -91,9 +91,18 @@ function assetController() {
         debug(error.message);
         res.sendStatus(500);
       }
-    } else if (!req.body.assetName) {
+    } else if (isEmptyRequestBody(req.body) === 0) {
       res.status(400);
-      res.send({ message: 'Asset can\'t be an empty object', accessToken });
+      res.send({
+        message: 'Asset can\'t be an empty object, please try again',
+        accessToken,
+      });
+    } else if (isEmptyRequestBody(req.body) < 8) {
+      res.status(400);
+      res.send({
+        message: 'Asset object is missing some information, please check and try again',
+        accessToken,
+      });
     } else {
       res.status(403);
       res.send({ message: 'Not authorized to create users', accessToken });

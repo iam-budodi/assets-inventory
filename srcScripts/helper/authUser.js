@@ -25,8 +25,17 @@ function authUser() {
     return sub;
   }
 
+  function isEmptyRequestBody(requestBody) {
+    return Object.keys(requestBody).length;
+  }
+
   return {
-    passwordStrength, generateSalt, hashPassword, validatePassword, getUsernameFromToken,
+    passwordStrength,
+    generateSalt,
+    hashPassword,
+    validatePassword,
+    getUsernameFromToken,
+    isEmptyRequestBody,
   };
 }
 

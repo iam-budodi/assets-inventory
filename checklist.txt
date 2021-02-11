@@ -9,6 +9,7 @@ USERS
 7. Create get single user with all its assets (TODO)
 8. modify update and delete functionality for only admin (TODO)
 9. only admin should see all the assets the rest should see only their assets (TODO)
+10. restrict empty or incomplete request body (completed)
 
 ASSETS 
 =========
