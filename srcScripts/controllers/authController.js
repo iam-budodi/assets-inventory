@@ -66,22 +66,36 @@ function authController() {
   async function signIn(req, res) {
     const base64Encoding = req.headers.authorization.split(' ')[1];
     const credentials = Buffer.from(base64Encoding, 'base64').toString().split(':');
-    const userName = credentials[0];
-    const password = credentials[1];
-    try {
-      const user = await getRepository('User').findOne({ userName });
+    if (credentials.join('').length !== 0 && credentials[1].length !== 0) {
+      const userName = credentials[0];
+      const password = credentials[1];
 
-      // TODO: find out a way to handle empty object from login request
-      if (user && (await validatePassword(password, user.password))) {
-        const token = await generateToken(null, user.userName);
-        res.status(200);
-        res.json({ name: user.firstName, role: user.role, token });
-      } else {
-        res.status(401);
-        res.json('Invalid credential');
+      try {
+        const user = await getRepository('User').findOne({ userName });
+
+        if (user && (await validatePassword(password, user.password))) {
+          const token = await generateToken(null, user.userName);
+          res.status(200);
+          res.json({ name: user.firstName, role: user.role, token });
+        } else {
+          res.status(401);
+          res.json({ message: 'Invalid credentials, please check and try again' });
+        }
+      } catch (error) {
+        if (credentials[0].length === 0) {
+          res.status(401);
+          res.json({ message: 'Please enter your username' });
+        } else {
+          res.status(500);
+          res.json({ message: 'Internal Server Error' });
+        }
       }
-    } catch (error) {
-      debug(error.message);
+    } else if (credentials[0].length === 0) {
+      res.status(401);
+      res.json({ message: 'Please enter your username and password' });
+    } else {
+      res.status(401);
+      res.json({ message: 'Please enter your password' });
     }
   }
 

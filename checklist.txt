@@ -1,19 +1,20 @@
-USERS
-=========
+USERS AND ASSETS
+======================
+
 1. only admin can signup USERS (completed)
 2. associate users with assets (completed)
 3. guard routes. (completed)
-4. get assets only for loged in user and owner of item (TODO)
-5. Handle empty object from login (TODO)
-6. Refactor get users function (TODO)
+4. get assets only for logged in user (completed)
+5. Only owner of item should retrieve associated items (TODO)
+6. Refactor get users function (Completed)
 7. Create get single user with all its assets (TODO)
-8. modify update and delete functionality for only admin (TODO)
+8. modify update and delete asset(s) functionality for only admin (TODO)
 9. only admin should see all the assets the rest should see only their assets (TODO)
 10. restrict empty or incomplete request body (completed)
-
-ASSETS 
-=========
-1. Properly refactor createAssets function to handle error 
+11. allow user to change their password and modify their profile, 
+    by implementing and update functionality on user object. (TODO)
+12. Handle empty object from login request (Completed)
+13. Properly refactor createAssets function to handle error 
    (Cannot set headers after they are sent to the client) (completed)
 
 

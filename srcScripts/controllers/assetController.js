@@ -45,7 +45,7 @@ function assetController() {
   async function createAsset(req, res) {
     const accessToken = req.headers.authorization.split(' ')[1];
     const userName = getUsernameFromToken(accessToken);
-    debug(Object.keys(req.body).length);
+
     if (isEmptyRequestBody(req.body) >= 8 && getAudienceFromToken(accessToken).includes(ASSET)) {
       const {
         assetNumber,
