@@ -1,45 +1,39 @@
 const { getConnection, getRepository } = require('typeorm');
 const debug = require('debug')('srcServer: assetController');
 const Asset = require('../entities/assetsEntity');
-const { ASSET } = require('../config/constants');
+const { ASSETS, ASSET, ASSETS_PER_MEMBER } = require('../config/constants');
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const { getUsernameFromToken, isEmptyRequestBody } = require('../helper/authUser')();
+const { getAllAssets, getUserAssets } = require('../helper/assetShared')();
 
 function assetController() {
   async function getAssets(req, res) {
-    try {
-      const assetRepository = await getRepository('Asset');
-      const { status, search } = req.query;
-
-      const query = await assetRepository.createQueryBuilder('assets');
-
-      if (status) {
-        const stat = status.toUpperCase();
-        query.andWhere('assets.assetStatus = :status', { status: stat });
-      }
-      if (search) {
-        query.andWhere(
-          '(assets.assetNumber LIKE :search OR assets.assetName LIKE :search OR assets.assetModel LIKE :search OR assets.assetLocation LIKE :search)',
-          { search: `%${search}%` },
-        );
-      }
-
-      const assets = await query.getMany();
-
-      if (!assets) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    if (getAudienceFromToken(accessToken).includes(ASSETS)) {
+      try {
+        res.json(await getAllAssets(req.query));
+      } catch (error) {
         res.status(500);
         res.send('Internal Server Error');
+        debug(error.message);
       }
-
-      res.json(assets);
-    } catch (error) {
-      debug(error.message);
+    } else if (getAudienceFromToken(accessToken).includes(ASSETS_PER_MEMBER)) {
+      try {
+        res.json(await getUserAssets(req.query, accessToken));
+      } catch (error) {
+        res.status(500);
+        res.send('Internal Server Error');
+        debug(error.message);
+      }
+    } else {
+      res.status(403);
+      res.send({ message: 'Not authorized to view assets', accessToken });
     }
   }
 
-  function getAssetById(req, res, next) {
+  function getAssetById(req, res) {
     res.json(req.asset);
-    next();
+    // next();
   }
 
   async function createAsset(req, res) {
@@ -61,7 +55,16 @@ function assetController() {
 
       try {
         const postQuery = await getRepository('Asset').createQueryBuilder('assets');
-        const { employeeID } = await getRepository('User').findOne({ userName, relations: ['assets'] });
+        // const { employeeID } = await getRepository('User')
+        // .findOne({ userName, relations: ['assets'] });
+        const users = await getRepository('User')
+          .find({ relations: ['assets'] });
+
+        const user = users.filter(
+          (asset) => asset.userName === userName,
+        );
+
+        const { employeeID } = user[0];
         const token = await generateToken(accessToken, null);
 
         const asset = {
@@ -105,7 +108,7 @@ function assetController() {
       });
     } else {
       res.status(403);
-      res.send({ message: 'Not authorized to create users', accessToken });
+      res.send({ message: 'Not authorized to create assets', accessToken });
     }
   }
 

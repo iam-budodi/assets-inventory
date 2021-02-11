@@ -6,13 +6,14 @@ const authRouter = express.Router();
 
 function authRoute() {
   const {
-    signUp, signIn, signOut, getUsers,
+    signUp, signIn, signOut, getUsers, getUserById,
   } = authController();
 
   authRouter.route('/login').post(signIn);
   authRouter.route('/signup').post(verifyToken, signUp);
   authRouter.route('/logout').get(verifyToken, signOut);
   authRouter.route('/users').get(verifyToken, getUsers);
+  authRouter.route('/users/:id').get(verifyToken, getUserById);
 
   return authRouter;
 }

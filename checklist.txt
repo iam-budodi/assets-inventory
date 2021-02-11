@@ -5,16 +5,17 @@ USERS AND ASSETS
 2. associate users with assets (completed)
 3. guard routes. (completed)
 4. get assets only for logged in user (completed)
-5. Only owner of item should retrieve associated items (TODO)
+5. Only owner of item should retrieve associated items (completed)
 6. Refactor get users function (Completed)
 7. Create get single user with all its assets (TODO)
 8. modify update and delete asset(s) functionality for only admin (TODO)
-9. only admin should see all the assets the rest should see only their assets (TODO)
+9. only admin should see all the assets the rest should see only their assets (completed)
 10. restrict empty or incomplete request body (completed)
 11. allow user to change their password and modify their profile, 
     by implementing and update functionality on user object. (TODO)
 12. Handle empty object from login request (Completed)
 13. Properly refactor createAssets function to handle error 
    (Cannot set headers after they are sent to the client) (completed)
+14. Fix: only admin should get any item by id, the rest should get only their ites (TODO)
 
 

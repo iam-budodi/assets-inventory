@@ -3,6 +3,8 @@ const { getRepository } = require('typeorm');
 const debug = require('debug')('srcServer: authController');
 const User = require('../entities/usersEntity');
 const { USERS, SIGNUP } = require('../config/constants');
+const { getUsernameFromToken } = require('../helper/authUser')();
+const { getOneUser } = require('../services/authService')();
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const {
   generateSalt, hashPassword, passwordStrength, validatePassword, isEmptyRequestBody,
@@ -133,6 +135,8 @@ function authController() {
           res.json({ message: 'Internal Server Error', accessToken });
         }
       } catch (error) {
+        res.status(500);
+        res.json({ message: 'Internal Server Error' });
         debug({
           errorMessage: error.message,
           errorDescription: 'Error retrieving users from database',
@@ -144,8 +148,15 @@ function authController() {
     }
   }
 
+  async function getUserById(req, res) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    const userName = getUsernameFromToken(accessToken);
+    const user = await getOneUser(userName);
+    debug(user);
+  }
+
   return {
-    signUp, signIn, signOut, getUsers,
+    signUp, signIn, signOut, getUsers, getUserById,
   };
 }
 
