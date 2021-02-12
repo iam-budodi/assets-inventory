@@ -16,7 +16,7 @@ USERS AND ASSETS
 12. Handle empty object from login request (Completed)
 13. Properly refactor createAssets function to handle error 
    (Cannot set headers after they are sent to the client) (completed)
-14. Fix: only admin should get any item by id, the rest should get only their ites (TODO)
+14. Fix: only admin should get any item by id, the rest should get only their ites (Completed)
 
 
 unused code for getting single user.

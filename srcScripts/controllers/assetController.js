@@ -40,7 +40,7 @@ function assetController() {
       try {
         const asset = await getAssetById(req.params);
         const token = await generateToken(accessToken, null);
-        debug(asset);
+
         if (!asset) {
           res.status(404);
           res.send({ message: 'No such asset', accessToken });
@@ -169,19 +169,36 @@ function assetController() {
   }
 
   async function deleteAsset(req, res) {
-    const { assetNumber } = req.asset;
+    const accessToken = req.headers.authorization.split(' ')[1];
+    let asset;
+    if (getAudienceFromToken(accessToken).includes(ASSETS)) {
+      try {
+        const token = await generateToken(accessToken, null);
+        asset = await getAssetById(req.params);
 
-    const deleted = await getConnection()
-      .createQueryBuilder()
-      .delete()
-      .from(Asset)
-      .where('assets.assetNumber = :assetNumber', { assetNumber })
-      .execute();
+        if (asset !== undefined) {
+          const { assetNumber, assetName } = asset;
 
-    if (!deleted) {
-      res.sendStatus(500);
+          await getConnection()
+            .createQueryBuilder()
+            .delete()
+            .from(Asset)
+            .where('assets.assetNumber = :assetNumber', { assetNumber })
+            .execute();
+
+          res.status(200);
+          res.json({ message: `Successfully deleted ${assetName} from record`, token });
+        } else {
+          res.status(404);
+          res.json({ message: 'No such an item in our record', token });
+        }
+      } catch (error) {
+        debug(error.message);
+      }
+    } else {
+      res.status(403);
+      res.send({ message: 'Not authorized to delete this asset', accessToken });
     }
-    res.send(deleted);
   }
 
   // async function middleware(req, res, next) {
