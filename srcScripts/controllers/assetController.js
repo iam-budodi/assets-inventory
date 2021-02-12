@@ -41,12 +41,12 @@ function assetController() {
         const asset = await getAssetById(req.params);
         const token = await generateToken(accessToken, null);
 
-        if (!asset) {
-          res.status(404);
-          res.send({ message: 'No such asset', accessToken });
-        } else {
+        if (asset !== undefined) {
           res.status(200);
           res.json({ asset, token });
+        } else {
+          res.status(404);
+          res.send({ message: 'No such asset', accessToken });
         }
       } catch (error) {
         res.status(500);
@@ -151,21 +151,65 @@ function assetController() {
     }
   }
 
-  async function updateAsset(req, res, next) {
-    const { assetNumber } = req.asset;
+  async function updateAsset(req, res) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    if (getAudienceFromToken(accessToken).includes(ASSETS)) {
+      try {
+        const asset = await getAssetById(req.params);
+        const token = await generateToken(accessToken, null);
 
-    const updated = await getConnection()
-      .createQueryBuilder()
-      .update(Asset)
-      .set(req.body)
-      .where('assets.assetNumber = :assetNumber', { assetNumber })
-      .execute();
+        if (asset !== undefined) {
+          const { assetNumber, assetName } = asset;
+          await getConnection()
+            .createQueryBuilder()
+            .update(Asset)
+            .set(req.body)
+            .where('assets.assetNumber = :assetNumber', { assetNumber })
+            .execute();
 
-    if (!updated) {
-      res.sendStatus(500);
+          res.status(200);
+          res.json({ message: `Successfully updated ${assetName} to a record`, token });
+        } else {
+          res.status(404);
+          res.send({ message: 'No such asset', token });
+        }
+      } catch (error) {
+        res.status(500);
+        res.send('Internal Server Error');
+        debug(error.message);
+      }
+    } else if (getAudienceFromToken(accessToken).includes(ASSETS_PER_MEMBER)) {
+      try {
+        const { id } = req.params;
+        const userAssets = await getUserAssets(accessToken);
+        const userAsset = userAssets.filter(
+          (asset) => asset.assetNumber === +id,
+        );
+
+        if (userAsset.length === 0) {
+          res.status(403);
+          res.json({ message: 'You have no such asset', accessToken });
+        } else {
+          const { assetNumber, assetName } = userAsset[0];
+          await getConnection()
+            .createQueryBuilder()
+            .update(Asset)
+            .set(req.body)
+            .where('assets.assetNumber = :assetNumber', { assetNumber })
+            .execute();
+
+          res.status(200);
+          res.json({ message: `Successfully updated ${assetName} to a record`, accessToken });
+        }
+      } catch (error) {
+        res.status(500);
+        res.send('Internal Server Error');
+        debug(error.message);
+      }
+    } else {
+      res.status(404);
+      res.send({ message: 'Not authorized to view this asset', accessToken });
     }
-    res.sendStatus(200);
-    next();
   }
 
   async function deleteAsset(req, res) {
@@ -200,26 +244,6 @@ function assetController() {
       res.send({ message: 'Not authorized to delete this asset', accessToken });
     }
   }
-
-  // async function middleware(req, res, next) {
-  //   try {
-  //     const assetRepository = await getRepository('Asset');
-  //     const { id } = req.params;
-
-  //     const query = await assetRepository.createQueryBuilder('assets');
-  //     const asset = await query.where('assets.assetNumber = :assetNumber',
-  //       { assetNumber: id }).getOne();
-
-  //     if (!asset) {
-  //       res.status(404);
-  //       res.send('Not Found');
-  //     }
-  //     req.asset = asset;
-  //     next();
-  //   } catch (error) {
-  //     debug(error.message);
-  //   }
-  // }
 
   return {
     getAssets, getAssetFromUserId, createAsset, updateAsset, deleteAsset,
