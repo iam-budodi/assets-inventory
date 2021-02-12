@@ -4,10 +4,9 @@ const { getUsernameFromToken } = require('./authUser')();
 
 function assetShared() {
   async function getAllAssets(requestQuery) {
-    const assetRepository = await getRepository('Asset');
     const { status, search } = requestQuery;
-
-    const query = await assetRepository.createQueryBuilder('assets');
+    const query = await getRepository('Asset')
+      .createQueryBuilder('assets');
 
     if (status) {
       const stat = status.toUpperCase();
@@ -23,24 +22,30 @@ function assetShared() {
     return query.getMany();
   }
 
-  async function getUserAssets(requestQuery, accessToken) {
+  async function getUserAssets(accessToken) {
     const userName = getUsernameFromToken(accessToken);
-    const users = await getRepository('User')
-      .find({ relations: ['assets'] });
 
-    const user = users.filter(
-      (asset) => asset.userName === userName,
-    );
+    const user = await getRepository('User')
+      .createQueryBuilder('users')
+      .leftJoinAndSelect('users.assets', 'assets')
+      .where('users.userName = :userName', { userName })
+      .getOne();
 
-    const allAssets = await getAllAssets(requestQuery);
-    const userAssets = allAssets.filter(
-      (asset) => asset.employeeID === user[0].employeeID,
-    );
-
-    return userAssets;
+    const { assets } = user;
+    return assets;
   }
 
-  return { getAllAssets, getUserAssets };
+  async function getAssetById(requestParams) {
+    const { id } = requestParams;
+
+    const asset = await getRepository('Asset')
+      .createQueryBuilder('assets')
+      .where('assets.assetNumber = :assetNumber', { assetNumber: id })
+      .getOne();
+
+    return asset;
+  }
+  return { getAllAssets, getUserAssets, getAssetById };
 }
 
 module.exports = assetShared;

@@ -40,7 +40,7 @@ module.exports = new EntitySchema({
       type: 'one-to-many',
       target: 'Asset',
       cascade: true,
-      eager: true,
+      eager: false,
       inverseSide: 'user',
     },
 

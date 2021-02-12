@@ -4,14 +4,16 @@ const Asset = require('../entities/assetsEntity');
 const { ASSETS, ASSET, ASSETS_PER_MEMBER } = require('../config/constants');
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const { getUsernameFromToken, isEmptyRequestBody } = require('../helper/authUser')();
-const { getAllAssets, getUserAssets } = require('../helper/assetShared')();
+const { getAllAssets, getUserAssets, getAssetById } = require('../helper/assetShared')();
 
 function assetController() {
   async function getAssets(req, res) {
     const accessToken = req.headers.authorization.split(' ')[1];
     if (getAudienceFromToken(accessToken).includes(ASSETS)) {
       try {
-        res.json(await getAllAssets(req.query));
+        const assets = await getAllAssets(req.query);
+        const token = await generateToken(accessToken, null);
+        res.json({ assets, token });
       } catch (error) {
         res.status(500);
         res.send('Internal Server Error');
@@ -19,7 +21,8 @@ function assetController() {
       }
     } else if (getAudienceFromToken(accessToken).includes(ASSETS_PER_MEMBER)) {
       try {
-        res.json(await getUserAssets(req.query, accessToken));
+        const userAssets = await getUserAssets(accessToken);
+        res.json({ userAssets, accessToken });
       } catch (error) {
         res.status(500);
         res.send('Internal Server Error');
@@ -31,9 +34,49 @@ function assetController() {
     }
   }
 
-  function getAssetById(req, res) {
-    res.json(req.asset);
-    // next();
+  async function getAssetFromUserId(req, res) {
+    const accessToken = req.headers.authorization.split(' ')[1];
+    if (getAudienceFromToken(accessToken).includes(ASSETS)) {
+      try {
+        const asset = await getAssetById(req.params);
+        const token = await generateToken(accessToken, null);
+        debug(asset);
+        if (!asset) {
+          res.status(404);
+          res.send({ message: 'No such asset', accessToken });
+        } else {
+          res.status(200);
+          res.json({ asset, token });
+        }
+      } catch (error) {
+        res.status(500);
+        res.send('Internal Server Error');
+        debug(error.message);
+      }
+    } else if (getAudienceFromToken(accessToken).includes(ASSETS_PER_MEMBER)) {
+      try {
+        const { id } = req.params;
+        const userAssets = await getUserAssets(accessToken);
+        const userAsset = userAssets.filter(
+          (asset) => asset.assetNumber === +id,
+        );
+
+        if (userAsset.length === 0) {
+          res.status(403);
+          res.json({ message: 'You have no such asset', accessToken });
+        } else {
+          res.status(200);
+          res.json({ userAsset: userAsset[0], accessToken });
+        }
+      } catch (error) {
+        res.status(500);
+        res.send('Internal Server Error');
+        debug(error.message);
+      }
+    } else {
+      res.status(404);
+      res.send({ message: 'Not authorized to view this asset', accessToken });
+    }
   }
 
   async function createAsset(req, res) {
@@ -54,19 +97,14 @@ function assetController() {
       } = req.body;
 
       try {
-        const postQuery = await getRepository('Asset').createQueryBuilder('assets');
-        // const { employeeID } = await getRepository('User')
-        // .findOne({ userName, relations: ['assets'] });
-        const users = await getRepository('User')
-          .find({ relations: ['assets'] });
+        const user = await getRepository('User')
+          .createQueryBuilder('users')
+          .leftJoinAndSelect('users.assets', 'assets')
+          .where('users.userName = :userName', { userName })
+          .getOne();
 
-        const user = users.filter(
-          (asset) => asset.userName === userName,
-        );
-
-        const { employeeID } = user[0];
+        const { employeeID } = user;
         const token = await generateToken(accessToken, null);
-
         const asset = {
           assetNumber,
           assetName,
@@ -78,11 +116,12 @@ function assetController() {
           assetLocation,
           assetCustodian,
         };
-
+        debug(user);
         asset.employeeID = employeeID;
         debug(asset);
 
-        await postQuery
+        await getRepository('Asset')
+          .createQueryBuilder('assets')
           .insert()
           .into(Asset)
           .values([asset])
@@ -145,28 +184,28 @@ function assetController() {
     res.send(deleted);
   }
 
-  async function middleware(req, res, next) {
-    try {
-      const assetRepository = await getRepository('Asset');
-      const { id } = req.params;
+  // async function middleware(req, res, next) {
+  //   try {
+  //     const assetRepository = await getRepository('Asset');
+  //     const { id } = req.params;
 
-      const query = await assetRepository.createQueryBuilder('assets');
-      const asset = await query.where('assets.assetNumber = :assetNumber',
-        { assetNumber: id }).getOne();
+  //     const query = await assetRepository.createQueryBuilder('assets');
+  //     const asset = await query.where('assets.assetNumber = :assetNumber',
+  //       { assetNumber: id }).getOne();
 
-      if (!asset) {
-        res.status(404);
-        res.send('Not Found');
-      }
-      req.asset = asset;
-      next();
-    } catch (error) {
-      debug(error.message);
-    }
-  }
+  //     if (!asset) {
+  //       res.status(404);
+  //       res.send('Not Found');
+  //     }
+  //     req.asset = asset;
+  //     next();
+  //   } catch (error) {
+  //     debug(error.message);
+  //   }
+  // }
 
   return {
-    getAssets, getAssetById, createAsset, middleware, updateAsset, deleteAsset,
+    getAssets, getAssetFromUserId, createAsset, updateAsset, deleteAsset,
   };
 }
 

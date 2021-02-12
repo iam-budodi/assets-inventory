@@ -3,7 +3,6 @@ const { getRepository } = require('typeorm');
 const debug = require('debug')('srcServer: authController');
 const User = require('../entities/usersEntity');
 const { USERS, SIGNUP } = require('../config/constants');
-const { getUsernameFromToken } = require('../helper/authUser')();
 const { getOneUser } = require('../services/authService')();
 const { generateToken, getAudienceFromToken } = require('../helper/authCookie')();
 const {
@@ -73,7 +72,10 @@ function authController() {
       const password = credentials[1];
 
       try {
-        const user = await getRepository('User').findOne({ userName });
+        const user = await getRepository('User')
+          .createQueryBuilder('users')
+          .where('users.userName = :userName', { userName })
+          .getOne();
 
         if (user && (await validatePassword(password, user.password))) {
           const token = await generateToken(null, user.userName);
@@ -112,8 +114,13 @@ function authController() {
     if (getAudienceFromToken(accessToken).includes(USERS)) {
       try {
         const updatedUserList = [];
-        const userRepository = await getRepository('User');
-        const users = await userRepository.find({ relations: ['assets'] });
+        // const userRepository = await getRepository('User');
+        // const users = await userRepository.find({ relations: ['assets'] });
+        const users = await getRepository('User')
+          .createQueryBuilder('users')
+          .leftJoinAndSelect('users.assets', 'assets')
+          .getMany();
+
         debug(users);
         if (users) {
           users.forEach((user) => {
@@ -150,9 +157,20 @@ function authController() {
 
   async function getUserById(req, res) {
     const accessToken = req.headers.authorization.split(' ')[1];
-    const userName = getUsernameFromToken(accessToken);
-    const user = await getOneUser(userName);
-    debug(user);
+
+    try {
+      const token = await generateToken(accessToken, null);
+      const user = await getOneUser(req.params);
+      res.status(200);
+      res.json({ user, token });
+    } catch (error) {
+      res.status(500);
+      res.json({ message: 'Internal Server Error' });
+      debug({
+        errorMessage: error.message,
+        errorDescription: 'Error retrieving user from database',
+      });
+    }
   }
 
   return {

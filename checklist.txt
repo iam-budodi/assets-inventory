@@ -7,7 +7,7 @@ USERS AND ASSETS
 4. get assets only for logged in user (completed)
 5. Only owner of item should retrieve associated items (completed)
 6. Refactor get users function (Completed)
-7. Create get single user with all its assets (TODO)
+7. Create get single user with all its assets (Completed)
 8. modify update and delete asset(s) functionality for only admin (TODO)
 9. only admin should see all the assets the rest should see only their assets (completed)
 10. restrict empty or incomplete request body (completed)
@@ -19,3 +19,15 @@ USERS AND ASSETS
 14. Fix: only admin should get any item by id, the rest should get only their ites (TODO)
 
 
+unused code for getting single user.
+const users = await getRepository('User')
+      .find({ relations: ['assets'] });
+
+    const user = users.filter(
+      (asset) => asset.userName === userName,
+    );
+    const allAssets = await getAllAssets(requestQuery);
+    const userAssets = allAssets.filter(
+      (asset) => asset.employeeID === user[0].employeeID,
+    );
+    return userAssets;

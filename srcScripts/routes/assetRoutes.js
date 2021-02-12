@@ -6,13 +6,13 @@ const assetRouter = express.Router();
 
 function assetRoute() {
   const {
-    getAssets, getAssetById, createAsset, middleware, updateAsset, deleteAsset,
+    getAssets, createAsset, getAssetFromUserId, updateAsset, deleteAsset,
   } = assetController();
 
-  assetRouter.use('/:id', middleware);
+  // assetRouter.use('/:id', middleware);
 
   assetRouter.route('/').get(verifyToken, getAssets);
-  assetRouter.route('/:id').get(verifyToken, getAssetById);
+  assetRouter.route('/:id').get(verifyToken, getAssetFromUserId);
   assetRouter.route('/').post(verifyToken, createAsset);
   assetRouter.route('/:id').put(verifyToken, updateAsset);
   assetRouter.route('/:id').delete(verifyToken, deleteAsset);

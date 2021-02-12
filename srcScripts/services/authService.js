@@ -1,13 +1,14 @@
 const { getRepository } = require('typeorm');
 
 function authService() {
-  async function getOneUser(username) {
-    const users = await getRepository('User')
-      .find({ relations: ['assets'] });
+  async function getOneUser(requestParams) {
+    const { id } = requestParams;
 
-    const user = users.filter(
-      (asset) => asset.userName === username,
-    );
+    const user = await getRepository('User')
+      .createQueryBuilder('users')
+      .leftJoinAndSelect('users.assets', 'assets')
+      .where('users.employeeID = :employeeID', { employeeID: id })
+      .getOne();
 
     return user;
   }

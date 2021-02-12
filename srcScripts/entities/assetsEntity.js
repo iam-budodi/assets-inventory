@@ -48,7 +48,7 @@ module.exports = new EntitySchema({
     user: {
       type: 'many-to-one',
       target: 'User',
-      eager: false,
+      eager: true,
       // joinColumn: true,
       joinColumn: {
         name: 'employeeID', referencedColumnName: 'employeeID',
