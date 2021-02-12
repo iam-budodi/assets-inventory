@@ -12,8 +12,9 @@
     "node",
     "express",
     "mssql",
-    "axios",
-    "vs-code",
+    "typeorm",
+    "jwt",
+    "docker",
     "javascript"
   ],
   "author": "Japhet Sebastian",
